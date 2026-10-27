@@ -1,11 +1,12 @@
 {
   "name": "platypus-liquidity-pools-atq-module",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
-  "main": "main.mjs",
+  "main": "dist/main.mjs",
   "license": "MIT",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "node --experimental-vm-modules --test tests/*.test.mjs"
   },
   "dependencies": {
     "atq-types": "^1.1.5",
