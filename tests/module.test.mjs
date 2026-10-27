@@ -16,7 +16,7 @@ async function fixture(rows,opts={}){
    data={_meta:meta,liquidityPools:opts.page??rows.filter(r=>typeof r.id!=='string'||r.id>cursor).slice(0,1000)};
   }else if(q.includes('liquidityPool(')){
    assert.match(q,/block:\{number:50\}/);const id=JSON.parse(/id:("[^"]*")/.exec(q)[1]);
-   data={_meta:{...historical,...opts.historyMeta},liquidityPool:opts.missingHistory?null:{id,protocol:{id:provider},poolAddress:opts.pool??id,_ignore:opts.ignored??false,...opts.historyRow}};
+   data={_meta:{...historical,...opts.historyMeta},liquidityPool:opts.missingHistory?null:{id,protocol:{id:provider},name:opts.nameFor?opts.nameFor(id):'Asset on Pool '+(opts.pool??id).slice(2,12),poolAddress:opts.pool??id,_ignore:opts.ignored??false,...opts.historyRow}};
   }else data={_meta:{...meta,...(requests.length===1?opts.initialMeta:opts.finalMeta)}};
   if(opts.httpError)return{ok:false};if(opts.graphError)return{ok:true,json:async()=>({errors:[{message:'failed'}]})};
   return{ok:true,json:async()=>({data})};
@@ -56,4 +56,16 @@ test('bad creation blocks, asset addresses, protocols and cursor regressions fai
 test('ignored original controllers are excluded and source failures do not become empty sets',async()=>{
  const f=await fixture([asset(1)],{ignored:true});assert.equal((await f.run('43114','synthetic-key')).length,0);
  for(const opts of [{httpError:true},{graphError:true}]){const f=await fixture([asset(1)],opts);await assert.rejects(f.run('43114','synthetic-key'));}
+});
+
+test('project-used names replace raw source aliases without address suffixes',async()=>{
+ for(const [raw,expected]of [['Main Pool','Main USD Pool'],['Alt Pool BTC.b-WBTC.e','Alt Pool BTC'],['Factory Pool dForce USX','Factory Pool USDC - USX'],['Alt Pool UST','Alt Pool UST']]){
+  const f=await fixture([asset(1)],{nameFor:()=>`Asset on ${raw}`}),tags=await f.run('43114','synthetic-key');assert.equal(tags[0]['Public Name Tag'],expected);
+ }
+});
+test('missing, unsafe or inconsistent original names fail atomically',async()=>{
+ for(const name of ['unknown','Asset on <script>x</script>','Asset on '+ 'x'.repeat(51),'Asset on [x](https://example.com)']){
+  const f=await fixture([asset(1)],{nameFor:()=>name});await assert.rejects(f.run('43114','synthetic-key'),/pool name/);
+ }
+ const f=await fixture([asset(1),asset(2)],{pool:address(99),nameFor:id=>'Asset on '+(id===address(1)?'Pool A':'Pool B')});await assert.rejects(f.run('43114','synthetic-key'),/Conflicting/);
 });

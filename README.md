@@ -9,3 +9,10 @@ Validates source deployment, protocol, block, entity identity and error state on
 Official source explanation: https://github.com/messari/subgraphs/blob/master/subgraphs/platypus-finance/README.md
 
 Exact execution is a count diagnostic; deployed contract and role proof, current source and policy, complete live overlap, applicable month and two independent reviews remain required. No filing authority.
+
+Names use the historical asset-name pool component, with three display aliases matching project-published pool names: Main USD Pool, Alt Pool BTC, and the USDC-USX factory pair. No address suffixes are added. Conflicting, missing, unsafe or overlong names fail the whole run. All addresses still come from the source poolAddress field; no contract list is embedded.
+
+Project name references:
+- https://github.com/platypus-finance/paraswap-dex-lib/blob/f32cdbaa8ef528b41fbfcfc167f86f117b499f33/src/dex/platypus/config.ts
+- https://github.com/platypus-finance/paraswap-dex-lib/blob/6199da59c1d61c91bf3f787f2ebd2049fde83f6a/src/dex/platypus/config.ts
+- https://github.com/platypus-finance/DefiLlama-Adapters/blob/9abb9e6a706b51da23f19800fe511ca1c98c797d/projects/platypus-finance/constants.js

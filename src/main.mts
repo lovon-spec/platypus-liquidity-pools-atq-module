@@ -11,6 +11,19 @@ function address(v: unknown): string {
   if (typeof v !== "string" || !/^0x[0-9a-f]{40}$/i.test(v) || /^0x0{40}$/i.test(v)) throw new Error("Invalid contract or context address");
   return v.toLowerCase();
 }
+function poolName(value:unknown): string {
+  if (typeof value !== "string" || value.lastIndexOf(" on ") < 1) throw new Error("Unknown original pool name");
+  let name = value.slice(value.lastIndexOf(" on ") + 4).trim().replace(/\s+/g," ");
+  // These display aliases follow project-published names, not address-derived instance IDs.
+  // https://github.com/platypus-finance/paraswap-dex-lib/blob/f32cdbaa8ef528b41fbfcfc167f86f117b499f33/src/dex/platypus/config.ts
+  // https://github.com/platypus-finance/paraswap-dex-lib/blob/6199da59c1d61c91bf3f787f2ebd2049fde83f6a/src/dex/platypus/config.ts
+  // https://github.com/platypus-finance/DefiLlama-Adapters/blob/9abb9e6a706b51da23f19800fe511ca1c98c797d/projects/platypus-finance/constants.js
+  if (name === "Main Pool") name = "Main USD Pool";
+  if (name === "Alt Pool BTC.b-WBTC.e") name = "Alt Pool BTC";
+  if (name === "Factory Pool dForce USX") name = "Factory Pool USDC - USX";
+  if (!name || Array.from(name).length > 50 || /[`<>\x00-\x1f\x7f]|\*\*|\[[^\]]*\]\(/.test(name)) throw new Error("Invalid original pool name");
+  return name;
+}
 function meta(v: unknown, number?: number, hash?: string): Meta {
   const m = v as Meta;
   if (!m || m.deployment !== deployment || m.hasIndexingErrors !== false || !Number.isSafeInteger(m.block?.number) || m.block.number < 1 ||
@@ -52,23 +65,26 @@ async returnTags(chainId:string, apiKey:string|null): Promise<ContractTag[]> {
     }
     if (rows.length < 1000) break;
   }
-  const contracts = new Set<string>();
+  const contracts = new Map<string,string>();
   for (const asset of assets) {
     const number = Number(asset.createdBlockNumber), historicalBlock = `block:{number:${number}}`;
     // Asset.pool can later move to a treasury or withdrawal helper. Read its original
     // pool at the source's creation block, rather than tagging a later controller.
-    const data = await query(`{_meta(${historicalBlock}){deployment hasIndexingErrors block{number hash}} liquidityPool(id:${JSON.stringify(asset.id)},${historicalBlock}){id protocol{id} poolAddress _ignore}}`,apiKey);
+    const data = await query(`{_meta(${historicalBlock}){deployment hasIndexingErrors block{number hash}} liquidityPool(id:${JSON.stringify(asset.id)},${historicalBlock}){id protocol{id} name poolAddress _ignore}}`,apiKey);
     meta(data._meta,number); // The Graph returns null hashes for some historical number reads.
-    const row = data.liquidityPool as {id:string;protocol:{id:string};poolAddress:string;_ignore:boolean};
+    const row = data.liquidityPool as {id:string;protocol:{id:string};name:string;poolAddress:string;_ignore:boolean};
     if (!row || row.id !== asset.id || address(row.protocol?.id) !== provider || typeof row._ignore !== "boolean") throw new Error("Unknown original pool");
     const contract = address(row.poolAddress);
-    if (!row._ignore) contracts.add(contract);
+    // The source marks false controller/helper records with _ignore; they are invalid pool entries.
+    if (row._ignore) continue;
+    const name = poolName(row.name);
+    if (contracts.has(contract) && contracts.get(contract) !== name) throw new Error("Conflicting original pool names");
+    contracts.set(contract,name);
   }
   meta((await query(`{_meta(${block}){deployment hasIndexingErrors block{number hash}}}`,apiKey))._meta,initial.block.number,initial.block.hash!);
   const labels = new Set<string>();
-  return [...contracts].sort().map(contract => {
-    const label = `Liquidity Pool (${contract.slice(2,12)})`;
-    if (labels.has(label)) throw new Error("Ambiguous address suffix");
+  return [...contracts].sort(([a],[b])=>a.localeCompare(b)).map(([contract,label]) => {
+    if (labels.has(label)) throw new Error("Ambiguous original pool names");
     labels.add(label);
     return {"Contract Address":`eip155:43114:${contract}`,"Project Name":"Platypus Finance","Public Name Tag":label,"UI/Website Link":"https://platypus.finance","Public Note":"Original Platypus Finance pool recorded at an asset's creation block in the source. Asset receipt tokens and underlying tokens are excluded. Includes historical pools; current balances, trading and deposits are not asserted."};
   });
