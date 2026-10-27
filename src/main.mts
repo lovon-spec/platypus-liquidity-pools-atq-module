@@ -1,4 +1,4 @@
-import type { ContractTag } from "atq-types";
+import type { ContractTag, ITagService } from "atq-types";
 import fetch from "node-fetch";
 
 // Current published Messari source B35cLTayreXTML6fXPTrFNSYx7mKyDuuV51LjVxWwWjp.
@@ -29,7 +29,8 @@ async function query(text:string, key:string): Promise<Record<string,unknown>> {
     return d.data;
   } finally { clearTimeout(timer); }
 }
-export async function returnTags(chainId:string, apiKey:string): Promise<ContractTag[]> {
+const service: ITagService = {
+async returnTags(chainId:string, apiKey:string|null): Promise<ContractTag[]> {
   if (chainId !== "43114") throw new Error(`Unsupported Chain ID: ${chainId}`);
   if (typeof apiKey !== "string" || !apiKey.trim()) throw new Error("A Graph API key is required");
   const initial = meta((await query("{_meta{deployment hasIndexingErrors block{number hash}}}",apiKey))._meta);
@@ -71,4 +72,8 @@ export async function returnTags(chainId:string, apiKey:string): Promise<Contrac
     labels.add(label);
     return {"Contract Address":`eip155:43114:${contract}`,"Project Name":"Platypus Finance","Public Name Tag":label,"UI/Website Link":"https://platypus.finance","Public Note":"Original Platypus Finance pool recorded at an asset's creation block in the source. Asset receipt tokens and underlying tokens are excluded. Includes historical pools; current balances, trading and deposits are not asserted."};
   });
+}
+};
+export async function returnTags(chainId:string, apiKey:string): Promise<ContractTag[]> {
+  return service.returnTags(chainId,apiKey);
 }
