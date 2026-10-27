@@ -16,3 +16,5 @@ Project name references:
 - https://github.com/platypus-finance/paraswap-dex-lib/blob/f32cdbaa8ef528b41fbfcfc167f86f117b499f33/src/dex/platypus/config.ts
 - https://github.com/platypus-finance/paraswap-dex-lib/blob/6199da59c1d61c91bf3f787f2ebd2049fde83f6a/src/dex/platypus/config.ts
 - https://github.com/platypus-finance/DefiLlama-Adapters/blob/9abb9e6a706b51da23f19800fe511ca1c98c797d/projects/platypus-finance/constants.js
+
+The original Main USD Pool is qualified as Deprecated to distinguish the replaced address from the later Main USD Pool in the project's updated configuration. Historical labels do not assert present operation.

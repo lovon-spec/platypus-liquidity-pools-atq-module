@@ -59,7 +59,7 @@ test('ignored original controllers are excluded and source failures do not becom
 });
 
 test('project-used names replace raw source aliases without address suffixes',async()=>{
- for(const [raw,expected]of [['Main Pool','Main USD Pool'],['Alt Pool BTC.b-WBTC.e','Alt Pool BTC'],['Factory Pool dForce USX','Factory Pool USDC - USX'],['Alt Pool UST','Alt Pool UST']]){
+ for(const [raw,expected]of [['Main Pool','Main USD Pool (Deprecated)'],['Alt Pool BTC.b-WBTC.e','Alt Pool BTC'],['Factory Pool dForce USX','Factory Pool USDC - USX'],['Alt Pool UST','Alt Pool UST']]){
   const f=await fixture([asset(1)],{nameFor:()=>`Asset on ${raw}`}),tags=await f.run('43114','synthetic-key');assert.equal(tags[0]['Public Name Tag'],expected);
  }
 });

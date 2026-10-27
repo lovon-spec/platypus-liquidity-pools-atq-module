@@ -18,7 +18,8 @@ function poolName(value:unknown): string {
   // https://github.com/platypus-finance/paraswap-dex-lib/blob/f32cdbaa8ef528b41fbfcfc167f86f117b499f33/src/dex/platypus/config.ts
   // https://github.com/platypus-finance/paraswap-dex-lib/blob/6199da59c1d61c91bf3f787f2ebd2049fde83f6a/src/dex/platypus/config.ts
   // https://github.com/platypus-finance/DefiLlama-Adapters/blob/9abb9e6a706b51da23f19800fe511ca1c98c797d/projects/platypus-finance/constants.js
-  if (name === "Main Pool") name = "Main USD Pool";
+  // The project replaced the original main-pool address; retain its official name with the policy's deprecated qualifier.
+  if (name === "Main Pool") name = "Main USD Pool (Deprecated)";
   if (name === "Alt Pool BTC.b-WBTC.e") name = "Alt Pool BTC";
   if (name === "Factory Pool dForce USX") name = "Factory Pool USDC - USX";
   if (!name || Array.from(name).length > 50 || /[`<>\x00-\x1f\x7f]|\*\*|\[[^\]]*\]\(/.test(name)) throw new Error("Invalid original pool name");
